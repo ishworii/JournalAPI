@@ -7,9 +7,9 @@ import com.ishwor.helloworld.entity.JournalEntity;
 import com.ishwor.helloworld.exception.JournalNotFoundException;
 import com.ishwor.helloworld.repository.JournalRepository;
 import com.ishwor.helloworld.service.JournalService;
-import com.ishwor.helloworld.mapper.Mapper;
+import com.ishwor.helloworld.mapper.JournalMapper;
+import org.springframework.security.access.expression.SecurityExpressionHandler;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -17,45 +17,87 @@ import java.util.List;
 public class JournalServiceImpl implements JournalService {
 
     private final JournalRepository repository;
+    private final CurrentUserService currentUserService;
+    private final JournalRepository journalRepository;
+    private final SecurityExpressionHandler securityExpressionHandler;
 
-    public JournalServiceImpl(JournalRepository journalRepository){
+    public JournalServiceImpl(JournalRepository journalRepository, CurrentUserService currentUserService, SecurityExpressionHandler securityExpressionHandler){
         this.repository = journalRepository;
+        this.currentUserService = currentUserService;
+        this.journalRepository = journalRepository;
+        this.securityExpressionHandler = securityExpressionHandler;
     }
 
     @Override
     public List<JournalResponse> getAll() {
-        return repository.findAll().stream().map(Mapper::toResponse).toList();
+        if(currentUserService.isAdmin()){
+            return repository.findAll().stream().map(JournalMapper::toResponse).toList();
+        }
+        Long userId = currentUserService.getCurrentUser().getId();
+        return journalRepository.findAllOwnerById(userId)
+                .stream()
+                .map(JournalMapper::toResponse)
+                .toList();
+
     }
 
     @Override
     public JournalResponse getById(Long id) {
-        JournalEntity entity = repository.findById(id)
+        if(currentUserService.isAdmin()){
+            JournalEntity entity = repository.findById(id)
+                    .orElseThrow(() -> new JournalNotFoundException(id));
+            return JournalMapper.toResponse(entity);
+        }
+        Long userId = currentUserService.getCurrentUser().getId();
+        var entity = repository.findByIdAndOwnerId(id,userId)
                 .orElseThrow(() -> new JournalNotFoundException(id));
-        return Mapper.toResponse(entity);
+        return JournalMapper.toResponse(entity);
     }
 
     @Override
     public JournalResponse create(JournalRequest request) {
-        JournalEntity journalEntity = Mapper.toEntity(request);
+        var user = currentUserService.getCurrentUser();
+
+        JournalEntity journalEntity = JournalMapper.toEntity(request);
+        journalEntity.setOwner(user);
+
         JournalEntity saved = repository.save(journalEntity);
-        return Mapper.toResponse(saved);
+        return JournalMapper.toResponse(saved);
     }
 
     @Override
     public JournalResponse update(Long id, JournalRequest request) {
-        JournalEntity existing = repository.findById(id)
+        if (currentUserService.isAdmin()){
+            JournalEntity existing = repository.findById(id)
+                    .orElseThrow(() -> new JournalNotFoundException(id));
+            existing.setTitle(request.getTitle());
+            existing.setContent(request.getContent());
+            JournalEntity saved = repository.save(existing);
+            return JournalMapper.toResponse(saved);
+        }
+        Long userId = currentUserService.getCurrentUser().getId();
+        JournalEntity existing = repository.findByIdAndOwnerId(id,userId)
                 .orElseThrow(() -> new JournalNotFoundException(id));
         existing.setTitle(request.getTitle());
         existing.setContent(request.getContent());
         JournalEntity saved = repository.save(existing);
-        return Mapper.toResponse(saved);
+        return JournalMapper.toResponse(saved);
+
     }
 
     @Override
     public void delete(Long id) {
-        if(!repository.existsById(id)){
+        if(currentUserService.isAdmin()){
+            if(!repository.existsById(id)){
+                throw new JournalNotFoundException(id);
+            }
+            repository.deleteById(id);
+        }
+        Long userId = currentUserService.getCurrentUser().getId();
+        if(!repository.existsByIdAndOwnerId(id,userId)){
             throw new JournalNotFoundException(id);
         }
-        repository.deleteById(id);
+        repository.deleteByIdAndOwnerId(id,userId);
+
     }
 }

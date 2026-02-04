@@ -4,7 +4,7 @@ import com.ishwor.helloworld.dto.JournalRequest;
 import com.ishwor.helloworld.dto.JournalResponse;
 import com.ishwor.helloworld.entity.JournalEntity;
 
-public class Mapper {
+public class JournalMapper {
 
     public static JournalEntity toEntity(JournalRequest request){
         JournalEntity entity = new JournalEntity();

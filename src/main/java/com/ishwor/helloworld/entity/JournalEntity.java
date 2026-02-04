@@ -16,6 +16,10 @@ public class JournalEntity {
     @Column(nullable = false,columnDefinition = "TEXT")
     private String content;
 
+    @ManyToOne(fetch = FetchType.LAZY,optional = false)
+    @JoinColumn(name="owner_id",nullable = false)
+    private UserEntity owner;
+
     public long getId() {
         return id;
     }
@@ -38,5 +42,13 @@ public class JournalEntity {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public UserEntity getOwner() {
+        return owner;
+    }
+
+    public void setOwner(UserEntity owner) {
+        this.owner = owner;
     }
 }
