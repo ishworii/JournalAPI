@@ -11,8 +11,8 @@
     <groupId>com.ishwor</groupId>
     <artifactId>journalApi</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>helloWorld</name>
-    <description>helloWorld</description>
+    <name>JournalAPI</name>
+    <description>A secure RESTful API for managing personal journals with JWT authentication</description>
     <url/>
     <licenses>
         <license/>
