@@ -87,6 +87,12 @@
             <version>4.1.0-M1</version>
             <scope>compile</scope>
         </dependency>
+        <!-- Input Validation -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
 
 
     </dependencies>

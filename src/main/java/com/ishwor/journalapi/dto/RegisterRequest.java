@@ -1,7 +1,17 @@
 package com.ishwor.journalapi.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 public class RegisterRequest {
+
+    @NotBlank(message = "email is required")
+    @Email(message="email must be valid")
     private String email;
+
+    @NotBlank(message = "password is required")
+    @Size(min=8,max = 72, message = "password should be 8-72 chars")
     private String password;
     private String role;
 

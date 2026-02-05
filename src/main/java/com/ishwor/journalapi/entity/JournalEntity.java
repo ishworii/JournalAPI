@@ -15,6 +15,7 @@ public class JournalEntity {
     private long id;
 
     @Column(nullable = false)
+
     private String title;
 
     @Column(nullable = false,columnDefinition = "TEXT")

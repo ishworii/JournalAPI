@@ -4,6 +4,7 @@ package com.ishwor.journalapi.controller;
 import com.ishwor.journalapi.dto.JournalRequest;
 import com.ishwor.journalapi.dto.JournalResponse;
 import com.ishwor.journalapi.service.JournalService;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -30,7 +31,7 @@ public class JournalController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public JournalResponse createJournal(@RequestBody JournalRequest request){
+    public JournalResponse createJournal(@Valid @RequestBody JournalRequest request){
        return journalService.create(request) ;
     }
 
@@ -40,7 +41,7 @@ public class JournalController {
     }
 
     @PutMapping("/{id}")
-    public JournalResponse updateJournal(@PathVariable Long id, @RequestBody JournalRequest request){
+    public JournalResponse updateJournal(@PathVariable Long id, @Valid @RequestBody JournalRequest request){
         return journalService.update(id,request);
     }
 

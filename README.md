@@ -424,7 +424,7 @@ src/main/java/com/ishwor/helloworld/
 
 ### High Priority
 
-1. **Pagination and Sorting**
+1. **Pagination and Sorting** Done
    - Implement pagination for journal list endpoints
    - Add sorting capabilities (by date, title, etc.)
    - Add filtering options (date range, search by title/content)
