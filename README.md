@@ -429,7 +429,7 @@ src/main/java/com/ishwor/helloworld/
    - Add sorting capabilities (by date, title, etc.)
    - Add filtering options (date range, search by title/content)
 
-2. **Input Validation**
+2. **Input Validation** Done
    - Add comprehensive request validation using Bean Validation (JSR-380)
    - Validate email format, password strength requirements
    - Add maximum length constraints for title and content
