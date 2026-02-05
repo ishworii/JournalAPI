@@ -4,10 +4,13 @@ package com.ishwor.journalapi.controller;
 import com.ishwor.journalapi.dto.JournalRequest;
 import com.ishwor.journalapi.dto.JournalResponse;
 import com.ishwor.journalapi.service.JournalService;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 @RestController
 @RequestMapping("/journal")
@@ -20,8 +23,9 @@ public class JournalController {
     }
 
     @GetMapping
-    public List<JournalResponse> getAll(){
-        return journalService.getAll();
+    public Page<JournalResponse> getAll(
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable){
+        return journalService.getAll(pageable);
     }
 
     @PostMapping

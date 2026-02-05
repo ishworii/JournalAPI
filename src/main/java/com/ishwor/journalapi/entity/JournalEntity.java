@@ -1,6 +1,10 @@
 package com.ishwor.journalapi.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name="journals")
@@ -19,6 +23,14 @@ public class JournalEntity {
     @ManyToOne(fetch = FetchType.LAZY,optional = false)
     @JoinColumn(name="owner_id",nullable = false)
     private UserEntity owner;
+
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
 
     public long getId() {
         return id;
@@ -50,5 +62,21 @@ public class JournalEntity {
 
     public void setOwner(UserEntity owner) {
         this.owner = owner;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

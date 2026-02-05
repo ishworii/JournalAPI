@@ -22,8 +22,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -53,17 +59,19 @@ public class JournalControllerTest {
         journal2.setContent("Second content");
 
         List<JournalResponse> journals = Arrays.asList(journal1, journal2);
+        Page<JournalResponse> page = new PageImpl<>(journals, PageRequest.of(0, 15), journals.size());
 
-        Mockito.when(journalService.getAll()).thenReturn(journals);
+        Mockito.when(journalService.getAll(any(Pageable.class))).thenReturn(page);
 
         mockMvc.perform(get("/journal"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].title").value("First Journal"))
-                .andExpect(jsonPath("$[0].content").value("First content"))
-                .andExpect(jsonPath("$[1].id").value(2))
-                .andExpect(jsonPath("$[1].title").value("Second Journal"))
-                .andExpect(jsonPath("$[1].content").value("Second content"));
+                .andExpect(jsonPath("$.content[0].id").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("First Journal"))
+                .andExpect(jsonPath("$.content[0].content").value("First content"))
+                .andExpect(jsonPath("$.content[1].id").value(2))
+                .andExpect(jsonPath("$.content[1].title").value("Second Journal"))
+                .andExpect(jsonPath("$.content[1].content").value("Second content"))
+                .andExpect(jsonPath("$.totalElements").value(2));
     }
 
     @Test
@@ -185,12 +193,14 @@ public class JournalControllerTest {
     @Test
     @WithMockUser
     public void shouldReturnEmptyList_WhenNoJournals() throws Exception {
-        Mockito.when(journalService.getAll()).thenReturn(Arrays.asList());
+        Page<JournalResponse> emptyPage = new PageImpl<>(Arrays.asList(), PageRequest.of(0, 15), 0);
+        Mockito.when(journalService.getAll(any(Pageable.class))).thenReturn(emptyPage);
 
         mockMvc.perform(get("/journal"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$").isEmpty());
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.totalElements").value(0));
     }
 
     // OWNERSHIP TESTS
@@ -204,15 +214,17 @@ public class JournalControllerTest {
         ownJournal.setContent("User1's content");
 
         List<JournalResponse> userJournals = Arrays.asList(ownJournal);
+        Page<JournalResponse> page = new PageImpl<>(userJournals, PageRequest.of(0, 15), userJournals.size());
 
-        Mockito.when(journalService.getAll()).thenReturn(userJournals);
+        Mockito.when(journalService.getAll(any(Pageable.class))).thenReturn(page);
 
         mockMvc.perform(get("/journal"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].title").value("User1's Journal"));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("User1's Journal"))
+                .andExpect(jsonPath("$.totalElements").value(1));
     }
 
     @Test
@@ -229,15 +241,17 @@ public class JournalControllerTest {
         journal2.setContent("User2's content");
 
         List<JournalResponse> allJournals = Arrays.asList(journal1, journal2);
+        Page<JournalResponse> page = new PageImpl<>(allJournals, PageRequest.of(0, 15), allJournals.size());
 
-        Mockito.when(journalService.getAll()).thenReturn(allJournals);
+        Mockito.when(journalService.getAll(any(Pageable.class))).thenReturn(page);
 
         mockMvc.perform(get("/journal"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].title").value("User1's Journal"))
-                .andExpect(jsonPath("$[1].title").value("User2's Journal"));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].title").value("User1's Journal"))
+                .andExpect(jsonPath("$.content[1].title").value("User2's Journal"))
+                .andExpect(jsonPath("$.totalElements").value(2));
     }
 
     @Test

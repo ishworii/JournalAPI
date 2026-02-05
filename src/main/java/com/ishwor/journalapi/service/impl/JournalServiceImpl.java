@@ -8,9 +8,11 @@ import com.ishwor.journalapi.exception.JournalNotFoundException;
 import com.ishwor.journalapi.repository.JournalRepository;
 import com.ishwor.journalapi.service.JournalService;
 import com.ishwor.journalapi.mapper.JournalMapper;
+import org.springframework.data.domain.Page;
 import org.springframework.security.access.expression.SecurityExpressionHandler;
 import org.springframework.stereotype.Service;
 
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 @Service
@@ -29,15 +31,12 @@ public class JournalServiceImpl implements JournalService {
     }
 
     @Override
-    public List<JournalResponse> getAll() {
+    public Page<JournalResponse> getAll(Pageable pageable) {
         if(currentUserService.isAdmin()){
-            return repository.findAll().stream().map(JournalMapper::toResponse).toList();
+            return repository.findAll(pageable).map(JournalMapper::toResponse);
         }
         Long userId = currentUserService.getCurrentUser().getId();
-        return journalRepository.findAllOwnerById(userId)
-                .stream()
-                .map(JournalMapper::toResponse)
-                .toList();
+        return journalRepository.findAllByOwnerId(userId, pageable).map(JournalMapper::toResponse);
 
     }
 

@@ -18,6 +18,8 @@ public class JournalMapper {
         response.setId(entity.getId());
         response.setContent(entity.getContent());
         response.setTitle(entity.getTitle());
+        response.setCreatedAt(entity.getCreatedAt());
+        response.setUpdatedAt(entity.getUpdatedAt());
         return response;
     }
 }
