@@ -26,7 +26,7 @@ public class OpenApiConfig {
                         .version("1.0.0")
                         .contact(new Contact()
                                 .name("Ishwor Khanal")
-                                .email("your@email.com"))
+                                .email("ishworkhanal21@gmail.com"))
                         .license(new License()
                                 .name("MIT License")
                                 .url("https://opensource.org/licenses/MIT")))
