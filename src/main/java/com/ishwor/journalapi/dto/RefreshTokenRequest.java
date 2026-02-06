@@ -3,8 +3,10 @@ package com.ishwor.journalapi.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 @Schema(description = "Request payload for refreshing access token")
 public class RefreshTokenRequest {
     @Schema(description = "Refresh token obtained from login or previous refresh",
@@ -12,12 +14,4 @@ public class RefreshTokenRequest {
             requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "refresh token is required")
     private String refreshToken;
-
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
-    }
 }

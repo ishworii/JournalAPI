@@ -3,7 +3,11 @@ package com.ishwor.journalapi.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Data
+@NoArgsConstructor
 @Schema(description = "Request payload for creating or updating a journal entry")
 public class JournalRequest {
 
@@ -16,20 +20,4 @@ public class JournalRequest {
     @NotBlank(message="content is required")
     @Size(max=5000,message = "content must be <=5000 chars")
     private String content;
-
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
 }
