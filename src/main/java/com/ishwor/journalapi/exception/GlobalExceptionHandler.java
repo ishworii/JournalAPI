@@ -60,4 +60,14 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(RefreshTokenException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public Map<String, Object> handleRefreshTokenException(RefreshTokenException ex) {
+        return Map.of(
+                "status", 401,
+                "error", "Invalid or expired refresh token",
+                "message", ex.getMessage()
+        );
+    }
+
 }
