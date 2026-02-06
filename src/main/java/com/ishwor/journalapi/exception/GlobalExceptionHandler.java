@@ -4,6 +4,7 @@ package com.ishwor.journalapi.exception;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -66,6 +67,26 @@ public class GlobalExceptionHandler {
         return Map.of(
                 "status", 401,
                 "error", "Invalid or expired refresh token",
+                "message", ex.getMessage()
+        );
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public Map<String, Object> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
+        return Map.of(
+                "status", 409,
+                "error", "Email already registered",
+                "message", ex.getMessage()
+        );
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public Map<String, Object> handleBadCredentials(BadCredentialsException ex) {
+        return Map.of(
+                "status", 401,
+                "error", "Authentication failed",
                 "message", ex.getMessage()
         );
     }

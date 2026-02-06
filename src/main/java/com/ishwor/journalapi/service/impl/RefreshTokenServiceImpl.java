@@ -34,6 +34,9 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
        // This prevents database constraint violations when user logs in multiple times
        refreshTokenEntityRepository.deleteByUser(user);
 
+       // Flush to ensure delete is committed before insert
+       refreshTokenEntityRepository.flush();
+
        // Create new refresh token
        RefreshTokenEntity refreshToken = new RefreshTokenEntity();
        refreshToken.setUser(user);

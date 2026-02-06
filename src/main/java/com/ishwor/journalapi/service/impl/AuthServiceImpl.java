@@ -7,10 +7,12 @@ import com.ishwor.journalapi.dto.RegisterRequest;
 import com.ishwor.journalapi.entity.RefreshTokenEntity;
 import com.ishwor.journalapi.entity.Role;
 import com.ishwor.journalapi.entity.UserEntity;
+import com.ishwor.journalapi.exception.EmailAlreadyExistsException;
 import com.ishwor.journalapi.repository.UserRepository;
 import com.ishwor.journalapi.service.AuthService;
 import com.ishwor.journalapi.service.JwtService;
 import com.ishwor.journalapi.service.RefreshTokenService;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +34,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse register(RegisterRequest request) {
         if(userRepository.findByEmail(request.getEmail()).isPresent()){
-            throw new RuntimeException("Email already in use");
+            throw new EmailAlreadyExistsException(request.getEmail());
         }
         Role role = Role.USER;
         if(request.getRole() != null){
@@ -57,9 +59,9 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse login(LoginRequest request) {
         UserEntity userEntity = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+                .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
         if(!passwordEncoder.matches(request.getPassword(),userEntity.getPasswordHash())){
-            throw new RuntimeException("Invalid credentials");
+            throw new BadCredentialsException("Invalid email or password");
         }
 
         // Generate short-lived access token (15 minutes)

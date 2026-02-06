@@ -100,7 +100,7 @@ public class AuthController {
                    String newAccessToken = jwtService.generateToken(user.getId(), user.getEmail(), user.getRole());
 
                    // TOKEN ROTATION: Create a brand NEW refresh token
-                   // This invalidates the old refresh token (security best practice)
+                   // This invalidates the old refresh token
                    RefreshTokenEntity newRefreshToken = refreshTokenService.createRefreshToken(user.getEmail());
 
                    return ResponseEntity.ok(new RefreshTokenResponse(newAccessToken, newRefreshToken.getToken()));
