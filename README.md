@@ -9,11 +9,15 @@ This application allows users to create, read, update, and delete journal entrie
 ## Features
 
 - User registration and authentication with JWT tokens
+- **Refresh token system with automatic token rotation** for enhanced security
 - Role-based access control (USER and ADMIN roles)
-- CRUD operations for journal entries
+- CRUD operations for journal entries with pagination support
 - Journal ownership enforcement - users can only access their own journals
 - Admin users have unrestricted access to all journals
-- Comprehensive test coverage (33 tests)
+- **Interactive API documentation with Swagger UI**
+- Automatic timestamps (createdAt, updatedAt) on journal entries
+- Comprehensive input validation with detailed error messages
+- Comprehensive test coverage (40 tests)
 - RESTful API design
 - Stateless authentication
 
@@ -78,6 +82,20 @@ mvn spring-boot:run
 
 The application will start on `http://localhost:8080`
 
+## API Documentation
+
+Interactive API documentation is available via Swagger UI at:
+
+```
+http://localhost:8080/swagger-ui.html
+```
+
+The OpenAPI specification is available at:
+
+```
+http://localhost:8080/v3/api-docs
+```
+
 ## API Endpoints
 
 ### Health Check
@@ -114,7 +132,17 @@ Content-Type: application/json
 **Response**: `200 OK`
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+**Error Response**: `409 Conflict` (Email already registered)
+```json
+{
+  "status": 409,
+  "error": "Email already registered",
+  "message": "Email already registered: user@example.com"
 }
 ```
 
@@ -136,9 +164,73 @@ Content-Type: application/json
 **Response**: `200 OK`
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
+
+**Error Response**: `401 Unauthorized` (Invalid credentials)
+```json
+{
+  "status": 401,
+  "error": "Authentication failed",
+  "message": "Bad credentials"
+}
+```
+
+#### Refresh Access Token
+
+```
+POST /auth/refresh
+Content-Type: application/json
+```
+
+**Request Body**:
+```json
+{
+  "refreshToken": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+**Response**: `200 OK`
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "660f9500-f39c-52e5-b827-557766551111"
+}
+```
+
+**Notes**:
+- The refresh token is automatically rotated on each refresh (old token becomes invalid)
+- Access tokens are valid for 15 minutes
+- Refresh tokens are valid for 24 hours
+- You can refresh at any time while the refresh token is valid (don't need to wait for access token to expire)
+
+**Error Response**: `401 Unauthorized` (Invalid or expired refresh token)
+```json
+{
+  "status": 401,
+  "error": "Invalid or expired refresh token",
+  "message": "Refresh token expired. Please login again."
+}
+```
+
+#### Logout
+
+```
+POST /auth/logout
+Authorization: Bearer <token>
+```
+
+**Response**: `200 OK`
+```json
+{
+  "message": "Logged out successfully",
+  "note": "Your refresh token has been revoked. Access token will remain valid until expiration."
+}
+```
+
+**Note**: Logout invalidates the refresh token. The access token remains valid until it naturally expires (15 minutes).
 
 ### User Management
 
@@ -162,12 +254,16 @@ Authorization: Bearer <token>
 
 All journal endpoints require authentication.
 
-#### Get all journals
+#### Get all journals (paginated)
 
 ```
-GET /journal
+GET /journal?page=0&size=15
 Authorization: Bearer <token>
 ```
+
+**Query Parameters**:
+- `page` (optional): Page number, starts at 0 (default: 0)
+- `size` (optional): Number of items per page (default: 15)
 
 **Behavior**:
 - Regular users: Returns only their own journals
@@ -175,13 +271,32 @@ Authorization: Bearer <token>
 
 **Response**: `200 OK`
 ```json
-[
-  {
-    "id": 1,
-    "title": "My First Journal",
-    "content": "Today was a great day..."
-  }
-]
+{
+  "content": [
+    {
+      "id": 1,
+      "title": "My First Journal",
+      "content": "Today was a great day...",
+      "createdAt": "2024-01-15T10:30:00Z",
+      "updatedAt": "2024-01-15T10:30:00Z"
+    },
+    {
+      "id": 2,
+      "title": "Another Entry",
+      "content": "Reflections on the week...",
+      "createdAt": "2024-01-16T14:20:00Z",
+      "updatedAt": "2024-01-16T14:20:00Z"
+    }
+  ],
+  "pageable": {
+    "pageNumber": 0,
+    "pageSize": 15
+  },
+  "totalElements": 2,
+  "totalPages": 1,
+  "last": true,
+  "first": true
+}
 ```
 
 #### Get journal by ID
@@ -200,7 +315,9 @@ Authorization: Bearer <token>
 {
   "id": 1,
   "title": "My First Journal",
-  "content": "Today was a great day..."
+  "content": "Today was a great day...",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "updatedAt": "2024-01-15T10:30:00Z"
 }
 ```
 
@@ -225,7 +342,9 @@ Content-Type: application/json
 {
   "id": 1,
   "title": "My Journal Entry",
-  "content": "Journal content here..."
+  "content": "Journal content here...",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "updatedAt": "2024-01-15T10:30:00Z"
 }
 ```
 
@@ -254,7 +373,9 @@ Content-Type: application/json
 {
   "id": 1,
   "title": "Updated Title",
-  "content": "Updated content..."
+  "content": "Updated content...",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "updatedAt": "2024-01-16T09:15:00Z"
 }
 ```
 
@@ -273,13 +394,35 @@ Authorization: Bearer <token>
 
 ## Authentication
 
-The API uses JWT (JSON Web Token) for authentication. After registering or logging in, include the token in subsequent requests:
+The API uses JWT (JSON Web Token) for authentication with refresh token rotation for enhanced security.
+
+### Token Types
+
+1. **Access Token**: Short-lived JWT token (15 minutes)
+   - Use for authenticating API requests
+   - Include in `Authorization: Bearer <access-token>` header
+   - Expires after 15 minutes
+
+2. **Refresh Token**: Long-lived token (24 hours)
+   - Use to obtain new access tokens without re-login
+   - Automatically rotated on each refresh (old token invalidated)
+   - Stored in database and can be revoked on logout
+   - Expires after 24 hours
+
+### Authentication Flow
+
+1. **Initial Login/Register**: Receive both access and refresh tokens
+2. **API Requests**: Use access token in Authorization header
+3. **Token Refresh**: When access token expires (or before), use refresh token to get new tokens
+4. **Logout**: Explicitly revoke refresh token
+
+### Using Tokens
+
+Include the access token in subsequent requests:
 
 ```
-Authorization: Bearer <your-jwt-token>
+Authorization: Bearer <your-access-token>
 ```
-
-JWT tokens expire after 1 hour (3600000 milliseconds).
 
 ## Error Responses
 
@@ -294,6 +437,20 @@ Returned when authentication is required but not provided or token is invalid.
 }
 ```
 
+### 400 Bad Request
+Returned when request validation fails.
+
+```json
+{
+  "status": 400,
+  "error": "Validation Failed",
+  "validationErrors": {
+    "email": "Email is required",
+    "password": "Password must be at least 8 characters"
+  }
+}
+```
+
 ### 404 Not Found
 Returned when a requested journal does not exist or the user doesn't have permission to access it.
 
@@ -302,6 +459,17 @@ Returned when a requested journal does not exist or the user doesn't have permis
   "status": 404,
   "error": "Not found",
   "message": "Journal not found with id:123"
+}
+```
+
+### 409 Conflict
+Returned when attempting to register with an email that already exists.
+
+```json
+{
+  "status": 409,
+  "error": "Email already registered",
+  "message": "Email already registered: user@example.com"
 }
 ```
 
@@ -318,12 +486,23 @@ Returned when a requested journal does not exist or the user doesn't have permis
 
 ### journals table
 
-| Column   | Type         | Constraints                    |
-|----------|--------------|--------------------------------|
-| id       | BIGINT       | PRIMARY KEY, AUTO INCREMENT    |
-| title    | VARCHAR(255) | NOT NULL                       |
-| content  | TEXT         | NOT NULL                       |
-| owner_id | BIGINT       | FOREIGN KEY (users.id), NOT NULL |
+| Column     | Type         | Constraints                    |
+|------------|--------------|--------------------------------|
+| id         | BIGINT       | PRIMARY KEY, AUTO INCREMENT    |
+| title      | VARCHAR(255) | NOT NULL                       |
+| content    | TEXT         | NOT NULL                       |
+| owner_id   | BIGINT       | FOREIGN KEY (users.id), NOT NULL |
+| created_at | TIMESTAMP    | NOT NULL, DEFAULT CURRENT_TIMESTAMP |
+| updated_at | TIMESTAMP    | NOT NULL, DEFAULT CURRENT_TIMESTAMP |
+
+### refresh_tokens table
+
+| Column      | Type         | Constraints                    |
+|-------------|--------------|--------------------------------|
+| id          | BIGINT       | PRIMARY KEY, AUTO INCREMENT    |
+| token       | VARCHAR(255) | UNIQUE, NOT NULL               |
+| user_id     | BIGINT       | FOREIGN KEY (users.id), UNIQUE, NOT NULL |
+| expiry_date | TIMESTAMP    | NOT NULL                       |
 
 ## Running Tests
 
@@ -350,13 +529,20 @@ mvn test -Dtest="*ControllerTest"
 
 ### Test Coverage
 
-- **Total Tests**: 33
-- **HealthCheckControllerTest**: 3 tests
-- **UserControllerTest**: 5 tests
-- **AuthControllerTest**: 5 tests
+- **Total Tests**: 40
+- **AuthControllerTest**: 11 tests
+  - Registration and login tests
+  - Refresh token tests with token rotation
+  - Logout tests
+  - Public endpoint accessibility tests
 - **JournalControllerTest**: 20 tests
-  - 11 basic CRUD and authentication tests
-  - 9 ownership and authorization tests
+  - CRUD operations with pagination
+  - Ownership and authorization tests
+  - Admin privilege tests
+- **UserControllerTest**: 8 tests
+  - User profile endpoint tests
+- **JournalApiApplicationTests**: 1 test
+  - Application context loading test
 
 All tests include:
 - Happy path scenarios
@@ -364,14 +550,18 @@ All tests include:
 - Authentication requirements
 - Authorization and ownership validation
 - Admin privilege verification
+- Token refresh and rotation validation
 
 ## Security Features
 
 1. **Password Hashing**: User passwords are hashed using BCrypt before storage
-2. **JWT Authentication**: Stateless authentication using JWT tokens
-3. **Role-Based Access Control**: USER and ADMIN roles with different permissions
-4. **Ownership Enforcement**: Users can only access their own resources
-5. **Admin Privileges**: Admin users have unrestricted access for management purposes
+2. **JWT Authentication**: Stateless authentication using short-lived JWT access tokens (15 minutes)
+3. **Refresh Token Rotation**: Automatic token rotation on refresh for enhanced security
+4. **Token Revocation**: Logout invalidates refresh tokens immediately
+5. **Role-Based Access Control**: USER and ADMIN roles with different permissions
+6. **Ownership Enforcement**: Users can only access their own resources
+7. **Admin Privileges**: Admin users have unrestricted access for management purposes
+8. **Input Validation**: Comprehensive validation with detailed error messages
 
 ## Configuration
 
@@ -389,7 +579,7 @@ spring.jpa.show-sql=true
 
 # JWT
 jwt.secret=<your-secret-key>
-jwt.expiration=3600000
+jwt.expiration=900000  # 15 minutes in milliseconds
 ```
 
 ## Development
@@ -424,33 +614,33 @@ src/main/java/com/ishwor/helloworld/
 
 ### High Priority
 
-1. **Pagination and Sorting** Done
-   - Implement pagination for journal list endpoints
+1. ✅ **Pagination and Sorting** - COMPLETED
+   - ✅ Pagination for journal list endpoints
    - Add sorting capabilities (by date, title, etc.)
    - Add filtering options (date range, search by title/content)
 
-2. **Input Validation** Done
-   - Add comprehensive request validation using Bean Validation (JSR-380)
-   - Validate email format, password strength requirements
-   - Add maximum length constraints for title and content
-   - Return detailed validation error messages
+2. ✅ **Input Validation** - COMPLETED
+   - ✅ Comprehensive request validation using Bean Validation (JSR-380)
+   - ✅ Validate email format, password strength requirements
+   - ✅ Maximum length constraints for title and content
+   - ✅ Detailed validation error messages
 
-3. **API Documentation** Done
-   - Integrate Swagger/OpenAPI for interactive API documentation
-   - Auto-generate API documentation from code annotations
-   - Include request/response examples
+3. ✅ **API Documentation** - COMPLETED
+   - ✅ Swagger/OpenAPI for interactive API documentation
+   - ✅ Auto-generate API documentation from code annotations
+   - ✅ Request/response examples with schemas
 
-4. **Enhanced Security**
-   - Implement refresh tokens for better token management
-   - Add token revocation/blacklist mechanism
+4. ✅ **Enhanced Security** - PARTIALLY COMPLETED
+   - ✅ Refresh tokens with automatic token rotation
+   - ✅ Token revocation on logout
    - Implement rate limiting to prevent abuse
    - Add CORS configuration for production environments
    - Move JWT secret to environment variables or secure vault
 
 ### Medium Priority
 
-5. **Journal Features**
-   - Add timestamps (createdAt, updatedAt) to journal entries
+5. **Journal Features** - PARTIALLY COMPLETED
+   - ✅ Automatic timestamps (createdAt, updatedAt) on journal entries
    - Support for tags/categories for better organization
    - Add journal sharing capabilities between users
    - Implement soft delete for journals (archive instead of permanent delete)
