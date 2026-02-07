@@ -104,6 +104,12 @@
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!-- Liquibase for DB migration -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-liquibase</artifactId>
+        </dependency>
+
 
 
     </dependencies>
